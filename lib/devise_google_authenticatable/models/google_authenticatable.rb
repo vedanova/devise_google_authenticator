@@ -10,6 +10,7 @@ module Devise # :nodoc:
 
         base.class_eval do
           before_validation :assign_auth_secret, :on => :create
+          before_update :assign_recovery_codes, if: ->(resource) { resource.gauth_enabled_changed? && resource.gauth_enabled == "1" && resource.gauth_recovery_codes.empty?}
           include InstanceMethods
         end
       end
@@ -64,8 +65,16 @@ module Devise # :nodoc:
 
         private
 
+        def assign_auth_secret_and_recovery_codes
+          assign_auth_secret
+        end
+
         def assign_auth_secret
           self.gauth_secret = ROTP::Base32.random_base32(64)
+        end
+
+        def assign_recovery_codes
+          self.gauth_recovery_codes = 20.times.inject([]) {|res, n| res << SecureRandom.hex(5)}
         end
 
       end

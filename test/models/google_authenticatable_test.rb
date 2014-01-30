@@ -67,6 +67,23 @@ class GoogleAuthenticatableTest < ActiveSupport::TestCase
 		assert u.require_token?(u.email + "," + 2.months.ago.to_i.to_s)
 		assert !u.require_token?(u.email + "," + 1.day.ago.to_i.to_s)
 		assert u.require_token?("testxx@test.com" + "," + 1.day.ago.to_i.to_s)
-	end
+  end
+
+  test 'assigns recovery codes' do
+    u = User.find(1)
+    u.update_attributes(gauth_enabled: "1")
+    assert_equal u.gauth_recovery_codes.class, Array
+    assert_equal u.gauth_recovery_codes.length, 20
+  end
+
+  test 'dose not recreate recovery codes on update' do
+    u = User.find(1)
+    u.update_attributes(gauth_enabled: "1")
+    assert_equal u.gauth_recovery_codes.length, 20
+    codes = u.gauth_recovery_codes
+    u.update_attributes(gauth_enabled: "0")
+    u.update_attributes(gauth_enabled: "1")
+    assert_equal codes, u.reload.gauth_recovery_codes
+  end
 
 end
