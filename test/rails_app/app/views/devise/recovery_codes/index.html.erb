@@ -1,2 +1,7 @@
 <h2><%= I18n.t('recovery_codes.download.title', {:scope => 'devise'}) %></h2>
-<%= link_to I18n.t('recovery_codes.download.button', {:scope => 'devise'}),  "#{send("download_#{resource_name}_recovery_codes_path")}" %>
+<%= form_for(resource, :as => resource_name, :url => [:download, resource_name, :recovery_codes], :html => { :method => :post }) do |f| %>
+    <%= devise_error_messages! %>
+    <%= f.text_field :current_password, :autocomplete => :off %>
+    <p><%= f.submit I18n.t('recovery_codes.download.button', {:scope => 'devise'}) %></p>
+<% end %>
+

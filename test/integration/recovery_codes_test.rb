@@ -12,7 +12,17 @@ class InvitationTest < ActionDispatch::IntegrationTest
   test 'visit recovery codes page and download the recovery codes' do
     sign_in_as_user
     visit user_recovery_codes_path
-    click_link "Download codes"
+    fill_in "user_current_password", with: "123456"
+    click_on "Download codes"
+    assert_equal 200, page.status_code
+  end
+
+  test 'visit recovery codes page and download the recovery codes with invalid password' do
+    sign_in_as_user
+    visit user_recovery_codes_path
+    fill_in "user_current_password", with: "foobar"
+    click_on "Download codes"
+    assert_equal 401, page.status_code
   end
 
   test 'login using a recovery code' do

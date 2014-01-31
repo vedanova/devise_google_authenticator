@@ -10,10 +10,15 @@ class Devise::RecoveryCodesController < DeviseController
   end
 
   def download
+    if  resource.valid_password?(resource_params[:current_password])
     @codes = resource.gauth_recovery_codes
     send_data(@codes.join("\n"),
               type: 'text/plain; charset=utf-8',
               disposition: 'attachment; filename=fmecloud_recovery_codes.txt')
+    else
+      resource.errors.add(:current_password, resource_params[:current_password].blank? ? :blank : :invalid)
+      render :index, status: 401
+    end
   end
 
   def login
@@ -53,7 +58,7 @@ class Devise::RecoveryCodesController < DeviseController
   end
 
   def resource_params
-    return params.require(resource_name.to_sym).permit(:email, :gauth_recovery_code, :tmp_id) if strong_parameters_enabled?
+    return params.require(resource_name.to_sym).permit(:email, :gauth_recovery_code, :tmp_id, :current_password) if strong_parameters_enabled?
     params[resource_name.to_sym]
   end
 
