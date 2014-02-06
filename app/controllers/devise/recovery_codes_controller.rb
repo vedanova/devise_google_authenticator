@@ -11,8 +11,8 @@ class Devise::RecoveryCodesController < DeviseController
 
   def download
     if  resource.valid_password?(resource_params[:current_password])
-    @codes = resource.gauth_recovery_codes
-    send_data(@codes.join("\n"),
+    @unencrypted_codes = resource.create_recovery_codes(resource_params[:current_password])
+    send_data(@unencrypted_codes.join("\n"),
               type: 'text/plain; charset=utf-8',
               disposition: 'attachment; filename=fmecloud_recovery_codes.txt')
     else
@@ -29,7 +29,7 @@ class Devise::RecoveryCodesController < DeviseController
     resource = resource_class.find_by_gauth_tmp(resource_params[:tmpid])
     if not resource.nil?
 
-      if resource.gauth_recovery_codes.include?(resource_params[:gauth_recovery_code])
+      if resource.valid_recovery_code?(resource_params[:gauth_recovery_code])
         set_flash_message(:notice, :signed_in) if is_navigational_format?
         sign_in(resource_name, resource)
         # remove used code

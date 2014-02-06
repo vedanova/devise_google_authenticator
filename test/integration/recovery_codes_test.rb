@@ -25,17 +25,30 @@ class InvitationTest < ActionDispatch::IntegrationTest
     assert_equal 401, page.status_code
   end
 
-  test 'login using a recovery code' do
-    testuser = create_and_signin_gauth_user
+  test 'successful login using a recovery code' do
+    sign_in_as_user
+    tmp_user = User.find(1)
+    tmp_user.gauth_enabled = 1
+    tmp_user.save!
+    visit user_recovery_codes_path
+    fill_in "user_current_password", with: "123456"
+    click_on "Download codes"
+    recovery_code = page.body.match(/<p>(.*)\n/)[1]
+
+    Capybara.reset_sessions!
+
+    visit new_user_session_path
+    fill_in 'user_email', :with => 'fulluser@test.com'
+    fill_in 'user_password', :with => '123456'
+    click_button 'Sign in'
     click_on "Enter a recovery code"
-    fill_in 'user_gauth_recovery_code', with: testuser.reload.gauth_recovery_codes.first
+    fill_in 'user_gauth_recovery_code', with: recovery_code
     click_on "Verify"
     assert_equal root_path, current_path
-    assert_equal 19, testuser.reload.gauth_recovery_codes.length
   end
 
-  test 'login using an invalid recovery code' do
-    testuser = create_and_signin_gauth_user
+  test 'unsuccessful login using an invalid recovery code' do
+    create_and_signin_gauth_user
     click_on "Enter a recovery code"
     fill_in 'user_gauth_recovery_code', with: "xyz"
     click_on "Verify"

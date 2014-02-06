@@ -10,7 +10,6 @@ module Devise # :nodoc:
 
         base.class_eval do
           before_validation :assign_auth_secret, :on => :create
-          before_update :assign_recovery_codes, if: ->(resource) { resource.gauth_enabled_changed? && resource.gauth_enabled == "1" && resource.gauth_recovery_codes.empty?}
           include InstanceMethods
         end
       end
@@ -63,6 +62,27 @@ module Devise # :nodoc:
           return last_logged_in_email != self.email || (Time.now.to_i - last_logged_in_time) > self.class.ga_remembertime.to_i
         end
 
+        def create_recovery_codes(password)
+          unencrypted_codes = 20.times.inject([]) { |res, n| res << SecureRandom.hex(5) }
+          self.gauth_recovery_codes = unencrypted_codes.inject([]) { |res, code| res << BCrypt::Password.create(code) }
+          save!
+          unencrypted_codes
+        end
+
+        def valid_recovery_code?(recovery_code)
+          enc_codes = self.gauth_recovery_codes
+          enc_codes.each do |code|
+            if BCrypt::Password.new(code) == recovery_code
+              # remove used recovery code
+              enc_codes.delete_at(enc_codes.index(code))
+              self.gauth_recovery_codes = enc_codes
+              save!
+              return true
+            end
+          end
+          false
+        end
+
         private
 
         def assign_auth_secret_and_recovery_codes
@@ -71,10 +91,6 @@ module Devise # :nodoc:
 
         def assign_auth_secret
           self.gauth_secret = ROTP::Base32.random_base32(64)
-        end
-
-        def assign_recovery_codes
-          self.gauth_recovery_codes = 20.times.inject([]) {|res, n| res << SecureRandom.hex(5)}
         end
 
       end

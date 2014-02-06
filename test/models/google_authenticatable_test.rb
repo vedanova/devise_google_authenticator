@@ -69,21 +69,19 @@ class GoogleAuthenticatableTest < ActiveSupport::TestCase
 		assert u.require_token?("testxx@test.com" + "," + 1.day.ago.to_i.to_s)
   end
 
-  test 'assigns recovery codes' do
+  test 'create recovery codes' do
     u = User.find(1)
-    u.update_attributes(gauth_enabled: "1")
+    u.create_recovery_codes('mypwd')
     assert_equal u.gauth_recovery_codes.class, Array
     assert_equal u.gauth_recovery_codes.length, 20
   end
 
-  test 'dose not recreate recovery codes on update' do
+  test 'checking a recovery code for its validity' do
     u = User.find(1)
-    u.update_attributes(gauth_enabled: "1")
-    assert_equal u.gauth_recovery_codes.length, 20
-    codes = u.gauth_recovery_codes
-    u.update_attributes(gauth_enabled: "0")
-    u.update_attributes(gauth_enabled: "1")
-    assert_equal codes, u.reload.gauth_recovery_codes
+    unencrypted = u.create_recovery_codes('mypwd')
+    assert_equal true, u.valid_recovery_code?(unencrypted[0])
+    assert_equal false, u.valid_recovery_code?('badPwd')
+    assert_equal 19, u.gauth_recovery_codes.length
   end
 
 end
