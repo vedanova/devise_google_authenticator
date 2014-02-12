@@ -64,7 +64,7 @@ module Devise # :nodoc:
 
         def create_recovery_codes(password)
           unencrypted_codes = 20.times.inject([]) { |res, n| res << SecureRandom.hex(5) }
-          self.gauth_recovery_codes = unencrypted_codes.inject([]) { |res, code| res << BCrypt::Password.create(code) }
+          self.gauth_recovery_codes = unencrypted_codes.inject([]) { |res, code| res << BCrypt::Password.create(code).to_s }
           save!
           unencrypted_codes
         end
