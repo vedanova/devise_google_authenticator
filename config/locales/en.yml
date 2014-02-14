@@ -23,4 +23,6 @@ en:
       download:
         title: "Download your recovery codes"
         button: "Download codes"
-
+      user:
+        signed_in: "Signed in successfully from recovery code."
+        error: "Sign in failed"
